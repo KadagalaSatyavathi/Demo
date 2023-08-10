@@ -35,3 +35,23 @@ pipeline:
                     region: us-east-1
                     bucket: harneestest
                     sourcePath: s3bucket
+              - step:
+                  type: Run
+                  name: Run_1
+                  identifier: Run_1
+                  spec:
+                    shell: Sh
+                    command: |2-
+                                    - step:
+                                        type: Run
+                                        name: Pytest
+                                        identifier: Pytest
+                                        spec:
+                                          shell: Sh
+                                          command: |-
+                                            pytest test_main.py --junit-xml=output-test.xml
+                                          reports:
+                                            type: JUnit
+                                            spec:
+                                              paths:
+                                                - output-test.xml
