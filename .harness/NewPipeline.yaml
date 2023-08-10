@@ -14,7 +14,6 @@ pipeline:
     - stage:
         name: build
         identifier: build
-        description: ""
         type: CI
         spec:
           cloneCodebase: true
@@ -66,3 +65,5 @@ pipeline:
                     repo: Demo
                     tags:
                       - tag
+          caching:
+            enabled: false
