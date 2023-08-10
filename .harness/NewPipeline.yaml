@@ -57,3 +57,12 @@ pipeline:
                     sourcePath: s3bucket
                     runAsUser: <+input>
                   timeout: <+input>
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: BuildAndPushDockerRegistry_1
+                  identifier: BuildAndPushDockerRegistry_1
+                  spec:
+                    connectorRef: account.harnessImage
+                    repo: Demo
+                    tags:
+                      - tag
