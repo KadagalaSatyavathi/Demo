@@ -27,15 +27,6 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: S3Upload
-                  name: S3Upload_1
-                  identifier: S3Upload_1
-                  spec:
-                    connectorRef: aws
-                    region: us-east-1
-                    bucket: harneestest
-                    sourcePath: s3bucket
-              - step:
                   type: Run
                   name: Run_1
                   identifier: Run_1
@@ -55,3 +46,14 @@ pipeline:
                                             spec:
                                               paths:
                                                 - output-test.xml
+              - step:
+                  type: S3Upload
+                  name: S3Upload_1
+                  identifier: S3Upload_1
+                  spec:
+                    connectorRef: aws
+                    region: us-east-1
+                    bucket: harneestest
+                    sourcePath: s3bucket
+                    runAsUser: <+input>
+                  timeout: <+input>
