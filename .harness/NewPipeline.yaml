@@ -21,7 +21,7 @@ pipeline:
             os: Windows
             arch: Arm64
           runtime:
-            type: Cloud
+            type: Docker
             spec: {}
           execution:
             steps:
