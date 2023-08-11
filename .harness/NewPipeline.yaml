@@ -31,39 +31,6 @@ pipeline:
                   identifier: Run_1
                   spec:
                     shell: Sh
-                    command: |2-
-                                    - step:
-                                        type: Run
-                                        name: Pytest
-                                        identifier: Pytest
-                                        spec:
-                                          shell: Sh
-                                          command: |-
-                                            pytest test_main.py --junit-xml=output-test.xml
-                                          reports:
-                                            type: JUnit
-                                            spec:
-                                              paths:
-                                                - output-test.xml
-              - step:
-                  type: S3Upload
-                  name: S3Upload_1
-                  identifier: S3Upload_1
-                  spec:
-                    connectorRef: aws
-                    region: us-east-1
-                    bucket: harneestest
-                    sourcePath: s3bucket
-                    runAsUser: <+input>
-                  timeout: <+input>
-              - step:
-                  type: BuildAndPushDockerRegistry
-                  name: BuildAndPushDockerRegistry_1
-                  identifier: BuildAndPushDockerRegistry_1
-                  spec:
-                    connectorRef: account.harnessImage
-                    repo: Demo
-                    tags:
-                      - tag
+                    command: welcome to harnees ci
           caching:
             enabled: false
