@@ -1,0 +1,40 @@
+pipeline:
+  name: lambda
+  identifier: lambda
+  projectIdentifier: default_project
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: stackforlambda
+        identifier: stackforlambda
+        description: ""
+        type: Custom
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: CreateStack
+                  name: creatstackforlambda
+                  identifier: creatstackforlambda
+                  spec:
+                    provisionerIdentifier: awslambda
+                    configuration:
+                      stackName: lambda1
+                      connectorRef: aws
+                      region: us-east-1
+                      templateFile:
+                        type: Remote
+                        spec:
+                          store:
+                            type: Github
+                            spec:
+                              paths:
+                                - Lambda.yaml
+                              connectorRef: github
+                              repoName: Demo
+                              gitFetchType: Branch
+                              branch: main
+                      roleArn: ""
+                  timeout: 10m
+        tags: {}
