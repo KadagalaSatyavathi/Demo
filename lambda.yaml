@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creation of Dynamodb table and Lambda triggers
+Resources: 
+  Mylambdafunction:
+    Type: 'AWS::Lambda::Function'
+    Properties: 
+      FunctionName: TestFunction
+      Runtime: python3.8 
+      Timeout: 10
+      Role: arn:aws:iam::679352887565:role/lambda
+      Code:
+        ZipFile: |
+          import json 
+          print('Loading function') 
+          def lambda_handler(event, context):
+              #print("Received event: " + json.dumps(event, indent=2))
+              for record in event['Records']: 
+              print(record['eventID'])
+              print(record['eventName'])
+              print("DynamoDB Record: " + json.dumps(record['dynamodb'], indent=2))
+            return 'Successfully processed {} records.'.format(len(event['Records'])) 
+      Handler: index.handler 
