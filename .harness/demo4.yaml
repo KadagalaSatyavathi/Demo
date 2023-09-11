@@ -1,0 +1,36 @@
+pipeline:
+  name: demo4
+  identifier: demo4
+  projectIdentifier: default_project
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: github
+        repoName: Demo
+        build: <+input>
+  stages:
+    - stage:
+        name: clone
+        identifier: clone
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Run_1
+                  identifier: Run_1
+                  spec:
+                    shell: Sh
+                    command: zip -r [Infra.yaml.zip] -x [codepiplne_name]
+                  description: zip
