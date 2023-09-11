@@ -1,0 +1,186 @@
+--- 
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Codepipeline for Infra creation 
+Parameters: 
+  S3Bucketname: 
+    Type: String 
+    Default: testingcodepipelineartifactstore 
+  S3BucketObjectKey: 
+    Type: String 
+    Default: core.zip
+
+Resources: 
+  ArtifactS3bucket: 
+    Type: AWS::S3::Bucket
+    Properties: 
+      BucketName: !Ref S3Bucketname 
+      VersioningConfiguration:
+        Status: Enabled
+  
+  # LambdaExecutionRole: 
+  #   Type: AWS::IAM::Role 
+  #   Properties: 
+  #     RoleName: lambda-execution-role 
+  #     ManagedPolicyArns: 
+  #       - arn:aws:iam::aws:policy/AmazonS3FullAccess
+  #       - arn:aws:iam::aws:policy/AWSCodeDeployFullAccess
+  #       - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+  #       - arn:aws:iam::aws:policy/AWSLambda_FullAccess 
+  #       - arn:aws:iam::aws:policy/CloudWatchFullAccess
+  #       - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess 
+  #       - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+  #       - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
+  #     AssumeRolePolicyDocument: 
+  #       Statement: 
+  #       - Effect: Allow
+  #         Principal: 
+  #           Service: 
+  #           - lambda.amazonaws.com
+  #         Action: 
+  #         - sts:AssumeRole
+  #       Path: "/" 
+  
+  # CloudformationExecutionRole: 
+  #   Type: AWS::IAM::Role 
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: 2012-10-17
+  #       Statement:
+  #         Effect: Allow
+  #         Principal:
+  #           Service:
+  #             - cloudformation.amazonaws.com
+  #             - iam.amazonaws.com
+  #         Action: 'sts:AssumeRole'
+  #     ManagedPolicyArns:
+  #       - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+  #       - 'arn:aws:iam::aws:policy/AWSCloudFormationFullAccess'
+  #       - 'arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess' 
+  
+  # CodePipelineRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     RoleName: CodePipelineRole
+  #     AssumeRolePolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service: codepipeline.amazonaws.com
+  #           Action: sts:AssumeRole
+  #     Policies:
+  #       - PolicyName: CodePipelinePolicy
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - s3:GetObject
+  #                 - s3:GetObjectVersion
+  #                 - s3:GetBucketVersioning
+  #                 - s3:ListBucket
+  #                 - s3:ListBucketVersions
+  #               Resource: "*" 
+
+  DeployPipeline: 
+    Type: AWS::CodePipeline::Pipeline 
+    Properties: 
+      Name: DepolyInfraCodepipeline12
+      RoleArn: "arn:aws:iam::938152492896:role/service-role/AWSCodePipelineServiceRole-us-east-2-testingpipeline"
+      ArtifactStore: 
+        Type: S3 
+        Location: !Ref ArtifactS3bucket 
+      Stages: 
+          - Name: DefineS3Source 
+            Actions: 
+              - Name: InfraCfn 
+                ActionTypeId: 
+                  Category: Source 
+                  Owner: AWS 
+                  Provider: S3
+                  Version: "1" 
+                Configuration: 
+                  S3Bucket: "infratests3bucket123"
+                  S3ObjectKey: !Ref S3BucketObjectKey
+                  PollForSourceChanges: "false"
+                OutputArtifacts: 
+                  - Name: InfraCfnSource 
+                RunOrder: 1  
+
+### Create ChangeSet 
+          - Name: CreatetestChangesets 
+            Actions: 
+              - Name: CreateLambdaChangeSet 
+                ActionTypeId: 
+                  Category: Deploy 
+                  Owner: AWS  
+                  Provider: CloudFormation
+                  Version: 1 
+                InputArtifacts: 
+                  - Name: InfraCfnSource 
+                Configuration: 
+                  ActionMode: CHANGE_SET_REPLACE 
+                  RoleArn: "arn:aws:iam::938152492896:role/CloudformationRole"
+                  StackName: CodepipelineCreateStackInfraLambda
+                  ChangeSetName: codepipelineCreatechangeset1
+                  TemplatePath: !Sub "InfraCfnSource::Core/Lambda.yaml" 
+                OutputArtifacts:
+                  - Name: LambdaChangeSet
+                RunOrder: 2 
+              
+              # - Name: CreateSNSChangeSet 
+              #   ActionTypeId: 
+              #     Category: Deploy 
+              #     Owner: AWS  
+              #     Provider: CloudFormation
+              #     Version: 1 
+              #   InputArtifacts: 
+              #     - Name: InfraCfnSource 
+              #   Configuration: 
+              #     ActionMode: CHANGE_SET_REPLACE 
+              #     RoleArn: "arn:aws:iam::938152492896:role/CloudformationRole"
+              #     StackName: CodepipelineCreateStackInfraSNS
+              #     ChangeSetName: codepipelineCreateSNSchangeSet
+              #     TemplatePath: !Sub "InfraCfnSource::Core/Sns.yaml" 
+              #   OutputArtifacts:
+              #     - Name: SNSChangeSet
+              #   RunOrder: 2
+  
+### Execuet ChangeSet 
+          - Name: ExecutetestChangesets 
+            Actions: 
+              - Name: ExecuteLambdaChangeSet 
+                ActionTypeId: 
+                  Category: Deploy 
+                  Owner: AWS  
+                  Provider: CloudFormation 
+                  Version: 1 
+                InputArtifacts: 
+                  - Name: LambdaChangeSet 
+                Configuration: 
+                  ActionMode: CHANGE_SET_EXECUTE 
+                  ChangeSetName: codepipelineCreatechangeset1
+                  RoleArn: "arn:aws:iam::938152492896:role/CloudformationRole"
+                  StackName: CodepipelineCreateStackInfraLambda
+                  OutputFileName: "LambdaOutput.json"
+                OutputArtifacts:
+                  - Name: LambdaOutput
+                RunOrder: 2 
+              
+              # - Name: ExecuteSNSChangeSet 
+              #   ActionTypeId: 
+              #     Category: Deploy 
+              #     Owner: AWS  
+              #     Provider: CloudFormation 
+              #     Version: 1 
+              #   InputArtifacts: 
+              #     - Name: SNSChangeSet 
+              #   Configuration: 
+              #     ActionMode: CHANGE_SET_EXECUTE 
+              #     ChangeSetName: codepipelineCreateSNSchangeSet
+              #     RoleArn: "arn:aws:iam::938152492896:role/CloudformationRole"
+              #     StackName: CodepipelineCreateStackInfraSNS
+              #     OutputFileName: "SNSOutput.json"
+              #   OutputArtifacts:
+              #     - Name: SNSOutput
+              #   RunOrder: 2
